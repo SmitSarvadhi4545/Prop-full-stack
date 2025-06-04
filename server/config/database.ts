@@ -1,4 +1,7 @@
 import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+
+let mongod: MongoMemoryServer;
 
 /**
  * Connects to MongoDB database using environment variables
@@ -6,8 +9,21 @@ import mongoose from 'mongoose';
  */
 export const connectDatabase = async (): Promise<void> => {
   try {
-    // Use PostgreSQL DATABASE_URL if available, otherwise fallback to MongoDB
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/playlist-manager';
+    let mongoUri: string;
+    
+    // Use environment MongoDB URI if available, otherwise use in-memory MongoDB
+    if (process.env.MONGODB_URI) {
+      mongoUri = process.env.MONGODB_URI;
+    } else {
+      // Start in-memory MongoDB for development
+      mongod = await MongoMemoryServer.create({
+        instance: {
+          dbName: 'playlist-manager'
+        }
+      });
+      mongoUri = mongod.getUri();
+      console.log('🟡 Using in-memory MongoDB for development');
+    }
     
     const options = {
       maxPoolSize: 10,
@@ -63,6 +79,12 @@ export const setupDatabaseEvents = (): void => {
 export const disconnectDatabase = async (): Promise<void> => {
   try {
     await mongoose.connection.close();
+    
+    // Stop in-memory MongoDB if it was used
+    if (mongod) {
+      await mongod.stop();
+    }
+    
     console.log('📦 Disconnected from MongoDB');
   } catch (error) {
     console.error('❌ Error disconnecting from MongoDB:', error);
