@@ -9,13 +9,10 @@ export const connectDatabase = async (): Promise<void> => {
     const mongoUri = process.env.MONGODB_URI || process.env.DATABASE_URL || 'mongodb://localhost:27017/playlist-manager';
     
     const options = {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
       bufferCommands: false,
-      bufferMaxEntries: 0,
     };
 
     await mongoose.connect(mongoUri, options);
