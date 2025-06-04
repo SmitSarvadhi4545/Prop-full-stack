@@ -38,7 +38,7 @@ class ApiClient {
     config: ApiRequestConfig = {}
   ): Promise<ApiResponse<T>> {
     const token = this.getAuthToken();
-    const url = `${this.baseURL}${endpoint}`;
+    let url = `${this.baseURL}${endpoint}`;
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',

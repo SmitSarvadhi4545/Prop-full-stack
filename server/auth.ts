@@ -1,5 +1,5 @@
 import { Express } from "express";
-import jwt from "jsonwebtoken";
+import * as jwt from "jsonwebtoken";
 import { authService } from "./services/authService";
 
 /**
@@ -72,9 +72,8 @@ export function setupAuth(app: Express) {
  */
 export function generateToken(userId: string): string {
   const secret = process.env.JWT_SECRET || 'your-secret-key';
-  const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
   
-  return jwt.sign({ userId }, secret, { expiresIn: expiresIn });
+  return jwt.sign({ userId }, secret, { expiresIn: '7d' });
 }
 
 /**

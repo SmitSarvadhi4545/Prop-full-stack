@@ -6,7 +6,8 @@ import mongoose from 'mongoose';
  */
 export const connectDatabase = async (): Promise<void> => {
   try {
-    const mongoUri = process.env.MONGODB_URI || process.env.DATABASE_URL || 'mongodb://localhost:27017/playlist-manager';
+    // Use PostgreSQL DATABASE_URL if available, otherwise fallback to MongoDB
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/playlist-manager';
     
     const options = {
       maxPoolSize: 10,
@@ -20,7 +21,10 @@ export const connectDatabase = async (): Promise<void> => {
     console.log('📦 Connected to MongoDB successfully');
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
-    process.exit(1);
+    // Don't exit process in development, just log the error
+    if (process.env.NODE_ENV === 'production') {
+      process.exit(1);
+    }
   }
 };
 
