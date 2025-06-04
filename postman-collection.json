@@ -1,0 +1,624 @@
+{
+  "info": {
+    "name": "Music Playlist Management System API",
+    "description": "Complete API collection for the Music Playlist Management System with authentication, playlist management, and Spotify integration",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "playlist_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "song_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('auth_token', response.data.token);",
+                  "    pm.collectionVariables.set('user_id', response.data.user._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"Test123!@#\",\n  \"name\": \"Test User\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new user account. Password must contain uppercase, lowercase, number, and special character."
+          }
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('auth_token', response.data.token);",
+                  "    pm.collectionVariables.set('user_id', response.data.user._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"Test123!@#\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login with email and password to get JWT token"
+          }
+        },
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Get current authenticated user profile"
+          }
+        },
+        {
+          "name": "Update User Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"username\": \"updateduser\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "profile"]
+            },
+            "description": "Update user profile information"
+          }
+        },
+        {
+          "name": "Logout User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Logout user (client should remove token)"
+          }
+        }
+      ],
+      "description": "User authentication endpoints including registration, login, profile management, and logout"
+    },
+    {
+      "name": "Playlists",
+      "item": [
+        {
+          "name": "Get User Playlists",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/playlists?page=1&limit=20&search=",
+              "host": ["{{base_url}}"],
+              "path": ["playlists"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page (default: 20)"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search query (optional)"
+                }
+              ]
+            },
+            "description": "Get all playlists for authenticated user with pagination and search"
+          }
+        },
+        {
+          "name": "Get Playlist by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/playlists/{{playlist_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["playlists", "{{playlist_id}}"]
+            },
+            "description": "Get specific playlist details with populated songs"
+          }
+        },
+        {
+          "name": "Create Playlist",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('playlist_id', response.data._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My Awesome Playlist\",\n  \"description\": \"A collection of my favorite songs\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/playlists",
+              "host": ["{{base_url}}"],
+              "path": ["playlists"]
+            },
+            "description": "Create a new playlist"
+          }
+        },
+        {
+          "name": "Update Playlist",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Playlist Name\",\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/playlists/{{playlist_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["playlists", "{{playlist_id}}"]
+            },
+            "description": "Update playlist details"
+          }
+        },
+        {
+          "name": "Delete Playlist",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/playlists/{{playlist_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["playlists", "{{playlist_id}}"]
+            },
+            "description": "Delete a playlist"
+          }
+        },
+        {
+          "name": "Add Song to Playlist",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"songId\": \"{{song_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/playlists/{{playlist_id}}/songs",
+              "host": ["{{base_url}}"],
+              "path": ["playlists", "{{playlist_id}}", "songs"]
+            },
+            "description": "Add a song to a playlist"
+          }
+        },
+        {
+          "name": "Remove Song from Playlist",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/playlists/{{playlist_id}}/songs/{{song_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["playlists", "{{playlist_id}}", "songs", "{{song_id}}"]
+            },
+            "description": "Remove a song from a playlist"
+          }
+        }
+      ],
+      "description": "Playlist management endpoints for CRUD operations and song management"
+    },
+    {
+      "name": "Songs",
+      "item": [
+        {
+          "name": "Get All Songs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/songs?page=1&limit=20&search=",
+              "host": ["{{base_url}}"],
+              "path": ["songs"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Get all songs with pagination and search"
+          }
+        },
+        {
+          "name": "Get Song by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/songs/{{song_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["songs", "{{song_id}}"]
+            },
+            "description": "Get specific song details"
+          }
+        },
+        {
+          "name": "Get Popular Songs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/songs/popular?limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["songs", "popular"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get most popular songs (used in most playlists)"
+          }
+        },
+        {
+          "name": "Create Song",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('song_id', response.data._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"spotifyId\": \"4uLU6hMCjMI75M1A2tKUQC\",\n  \"name\": \"Blinding Lights\",\n  \"artist\": \"The Weeknd\",\n  \"album\": \"After Hours\",\n  \"duration\": 200040,\n  \"imageUrl\": \"https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36\",\n  \"previewUrl\": \"https://p.scdn.co/mp3-preview/...\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/songs",
+              "host": ["{{base_url}}"],
+              "path": ["songs"]
+            },
+            "description": "Create a new song entry"
+          }
+        }
+      ],
+      "description": "Song management endpoints for viewing and creating songs"
+    },
+    {
+      "name": "Spotify Integration",
+      "item": [
+        {
+          "name": "Search Spotify Tracks",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/spotify/search?q=blinding lights&page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["spotify", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "blinding lights",
+                  "description": "Search query"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Results per page"
+                }
+              ]
+            },
+            "description": "Search for tracks on Spotify"
+          }
+        },
+        {
+          "name": "Get Spotify Track Details",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/spotify/track/4uLU6hMCjMI75M1A2tKUQC",
+              "host": ["{{base_url}}"],
+              "path": ["spotify", "track", "4uLU6hMCjMI75M1A2tKUQC"]
+            },
+            "description": "Get detailed information about a specific Spotify track"
+          }
+        },
+        {
+          "name": "Add Spotify Track to Database",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('song_id', response.data._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"spotifyId\": \"4uLU6hMCjMI75M1A2tKUQC\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/spotify/add-track",
+              "host": ["{{base_url}}"],
+              "path": ["spotify", "add-track"]
+            },
+            "description": "Add a Spotify track to the database"
+          }
+        },
+        {
+          "name": "Get Multiple Spotify Tracks",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/spotify/tracks?ids=4uLU6hMCjMI75M1A2tKUQC,7qiZfU4dY1lWllzX7mPBI3",
+              "host": ["{{base_url}}"],
+              "path": ["spotify", "tracks"],
+              "query": [
+                {
+                  "key": "ids",
+                  "value": "4uLU6hMCjMI75M1A2tKUQC,7qiZfU4dY1lWllzX7mPBI3",
+                  "description": "Comma-separated Spotify track IDs"
+                }
+              ]
+            },
+            "description": "Get multiple tracks from Spotify by IDs"
+          }
+        },
+        {
+          "name": "Get Featured Playlists",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/spotify/featured?limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["spotify", "featured"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get featured playlists from Spotify"
+          }
+        },
+        {
+          "name": "Get Spotify Status",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/spotify/status",
+              "host": ["{{base_url}}"],
+              "path": ["spotify", "status"]
+            },
+            "description": "Check Spotify API configuration and connectivity"
+          }
+        }
+      ],
+      "description": "Spotify Web API integration endpoints for searching and fetching music data"
+    },
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "API Health Check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Check if the API is running and healthy"
+          }
+        }
+      ],
+      "description": "Health check endpoint to verify API status"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-set authorization header if token exists",
+          "const token = pm.collectionVariables.get('auth_token');",
+          "if (token && !pm.request.auth.disabled) {",
+          "    pm.request.headers.add({",
+          "        key: 'Authorization',",
+          "        value: `Bearer ${token}`",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ]
+}
