@@ -1,7 +1,7 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { UserModel } from '../models/User';
-import { InsertUser } from '@shared/schema';
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { UserModel } from "../models/User";
+import { InsertUser } from "@shared/schema";
 
 /**
  * Authentication service handling user management and JWT operations
@@ -11,8 +11,9 @@ export class AuthService {
   private jwtExpiresIn: string;
 
   constructor() {
-    this.jwtSecret = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-    this.jwtExpiresIn = process.env.JWT_EXPIRES_IN || '7d';
+    this.jwtSecret =
+      process.env.JWT_SECRET || "your-secret-key-change-in-production";
+    this.jwtExpiresIn = process.env.JWT_EXPIRES_IN || "7d";
   }
 
   /**
@@ -26,7 +27,10 @@ export class AuthService {
   /**
    * Compare password with hashed password
    */
-  private async comparePassword(password: string, hashedPassword: string): Promise<boolean> {
+  private async comparePassword(
+    password: string,
+    hashedPassword: string
+  ): Promise<boolean> {
     return await bcrypt.compare(password, hashedPassword);
   }
 
@@ -34,11 +38,9 @@ export class AuthService {
    * Generate JWT token for user
    */
   private generateToken(userId: string): string {
-    return jwt.sign(
-      { userId },
-      this.jwtSecret,
-      { expiresIn: this.jwtExpiresIn }
-    );
+    return jwt.sign({ userId }, this.jwtSecret, {
+      expiresIn: this.jwtExpiresIn,
+    });
   }
 
   /**
@@ -65,20 +67,20 @@ export class AuthService {
     // Create user in database
     const user = new UserModel({
       ...userData,
-      password: hashedPassword
+      password: hashedPassword,
     });
 
     await user.save();
 
     // Generate JWT token
-    const token = this.generateToken(user._id);
+    const token = this.generateToken(user.userid);
 
     // Return user without password and token
     const userResponse = user.toJSON();
-    
+
     return {
       user: userResponse,
-      token
+      token,
     };
   }
 
@@ -88,27 +90,27 @@ export class AuthService {
   async authenticateUser(email: string, password: string) {
     // Find user by email
     const user = await UserModel.findOne({ email }).exec();
-    
+
     if (!user) {
       return null;
     }
 
     // Check password
     const isPasswordValid = await this.comparePassword(password, user.password);
-    
+
     if (!isPasswordValid) {
       return null;
     }
 
     // Generate JWT token
-    const token = this.generateToken(user._id);
+    const token = this.generateToken(user.userid);
 
     // Return user without password and token
     const userResponse = user.toJSON();
-    
+
     return {
       user: userResponse,
-      token
+      token,
     };
   }
 
@@ -119,11 +121,12 @@ export class AuthService {
     // Remove password from update data for security
     const { password, ...safeUpdateData } = updateData;
 
-    const user = await UserModel.findByIdAndUpdate(
-      userId,
-      safeUpdateData,
-      { new: true, runValidators: true }
-    ).select('-password').exec();
+    const user = await UserModel.findByIdAndUpdate(userId, safeUpdateData, {
+      new: true,
+      runValidators: true,
+    })
+      .select("-password")
+      .exec();
 
     return user;
   }
@@ -131,38 +134,53 @@ export class AuthService {
   /**
    * Change user password
    */
-  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string
+  ) {
     // Get user with password
     const user = await UserModel.findById(userId).exec();
-    
+
     if (!user) {
-      throw new Error('User not found');
+      throw new Error("User not found");
     }
 
     // Verify current password
-    const isCurrentPasswordValid = await this.comparePassword(currentPassword, user.password);
-    
+    const isCurrentPasswordValid = await this.comparePassword(
+      currentPassword,
+      user.password
+    );
+
     if (!isCurrentPasswordValid) {
-      throw new Error('Current password is incorrect');
+      throw new Error("Current password is incorrect");
     }
 
     // Hash new password
     const hashedNewPassword = await this.hashPassword(newPassword);
 
     // Update password
-    await UserModel.findByIdAndUpdate(userId, { password: hashedNewPassword }).exec();
+    await UserModel.findByIdAndUpdate(userId, {
+      password: hashedNewPassword,
+    }).exec();
 
-    return { message: 'Password changed successfully' };
+    return { message: "Password changed successfully" };
   }
 
   /**
    * Verify JWT token and return user ID
    */
-  verifyToken(token: string): { userId: string } | null {
+  async verifyToken(token: string): Promise<{ userId: string } | null> {
     try {
-      const decoded = jwt.verify(token, this.jwtSecret) as { userId: string };
+      const secret = process.env.JWT_SECRET || "your-secret-key";
+      console.log(`Verifying token with secret: ${secret}`); // Log the secret key being used
+
+      const decoded = jwt.verify(token, secret) as { userId: string };
+      console.log(`Token successfully verified: ${JSON.stringify(decoded)}`); // Log the decoded token
+
       return decoded;
     } catch (error) {
+      console.error("Token verification error:", error); // Log the error for debugging
       return null;
     }
   }
@@ -171,7 +189,7 @@ export class AuthService {
    * Get user by ID (without password)
    */
   async getUserById(userId: string) {
-    return await UserModel.findById(userId).select('-password').exec();
+    return await UserModel.findById(userId).select("-password").exec();
   }
 
   /**
@@ -186,10 +204,10 @@ export class AuthService {
    */
   async getUserStats(userId: string) {
     // This could be extended to include playlist count, song count, etc.
-    const user = await UserModel.findById(userId).select('-password').exec();
-    
+    const user = await UserModel.findById(userId).select("-password").exec();
+
     if (!user) {
-      throw new Error('User not found');
+      throw new Error("User not found");
     }
 
     // You can add more statistics here by aggregating from other collections

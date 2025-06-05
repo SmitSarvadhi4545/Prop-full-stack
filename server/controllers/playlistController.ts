@@ -1,7 +1,8 @@
-import { Request, Response } from 'express';
-import { playlistService } from '../services/playlistService';
-import { insertPlaylistSchema, updatePlaylistSchema } from '@shared/schema';
-import { z } from 'zod';
+import { Request, Response } from "express";
+import { playlistService } from "../services/playlistService";
+import { insertPlaylistSchema, updatePlaylistSchema } from "@shared/schema";
+import { z } from "zod";
+import { PlaylistModel } from "../models/Playlist";
 
 interface AuthRequest extends Request {
   user?: any;
@@ -20,7 +21,7 @@ export class PlaylistController {
       if (!req.user) {
         res.status(401).json({
           success: false,
-          error: 'Authentication required'
+          error: "Authentication required",
         });
         return;
       }
@@ -30,7 +31,7 @@ export class PlaylistController {
       const search = req.query.search as string;
 
       const result = await playlistService.getUserPlaylists(
-        req.user._id,
+        req.user.userid,
         page,
         limit,
         search
@@ -39,13 +40,13 @@ export class PlaylistController {
       res.status(200).json({
         success: true,
         data: result.data,
-        pagination: result.pagination
+        pagination: result.pagination,
       });
     } catch (error) {
-      console.error('Get playlists error:', error);
+      console.error("Get playlists error:", error);
       res.status(500).json({
         success: false,
-        error: 'Failed to fetch playlists'
+        error: "Failed to fetch playlists",
       });
     }
   }
@@ -54,46 +55,31 @@ export class PlaylistController {
    * Get a specific playlist by ID with populated songs
    * GET /api/playlists/:id
    */
-  async getPlaylistById(req: AuthRequest, res: Response): Promise<void> {
+  async getPlaylistById(
+    req: Request & { user?: any },
+    res: Response
+  ): Promise<void> {
     try {
       if (!req.user) {
-        res.status(401).json({
-          success: false,
-          error: 'Authentication required'
-        });
-        return;
+        res
+          .status(401)
+          .json({ success: false, error: "Authentication required" });
       }
 
-      const playlistId = req.params.id;
-
-      if (!playlistId) {
-        res.status(400).json({
-          success: false,
-          error: 'Playlist ID is required'
-        });
-        return;
-      }
-
-      const playlist = await playlistService.getPlaylistById(playlistId, req.user._id);
-
+      const playlist = await PlaylistModel.findOne({
+        _id: req.params.id,
+        owner: req.user.userid,
+      }).populate("songs");
       if (!playlist) {
-        res.status(404).json({
-          success: false,
-          error: 'Playlist not found'
-        });
-        return;
+        res.status(404).json({ success: false, error: "Playlist not found" });
       }
 
-      res.status(200).json({
-        success: true,
-        data: playlist
-      });
+      res.status(200).json({ success: true, data: playlist });
     } catch (error) {
-      console.error('Get playlist error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch playlist'
-      });
+      console.error("Get playlist error:", error);
+      res
+        .status(500)
+        .json({ success: false, error: "Failed to fetch playlist" });
     }
   }
 
@@ -101,45 +87,66 @@ export class PlaylistController {
    * Create a new playlist
    * POST /api/playlists
    */
-  async createPlaylist(req: AuthRequest, res: Response): Promise<void> {
+  async createPlaylist(
+    req: Request & { user?: any },
+    res: Response
+  ): Promise<void> {
     try {
       if (!req.user) {
-        res.status(401).json({
-          success: false,
-          error: 'Authentication required'
-        });
+        res
+          .status(401)
+          .json({ success: false, error: "Authentication required" });
         return;
       }
 
-      // Validate request body
-      const validationResult = insertPlaylistSchema.safeParse(req.body);
-      
-      if (!validationResult.success) {
-        res.status(400).json({
-          success: false,
-          error: 'Invalid input data',
-          details: validationResult.error.errors
-        });
+      console.log(req.user);
+
+      const { name, description } = req.body;
+
+      if (!name) {
+        res
+          .status(400)
+          .json({ success: false, error: "Playlist name is required" });
         return;
       }
 
-      const playlistData = validationResult.data;
-      const playlist = await playlistService.createPlaylist({
-        ...playlistData,
-        owner: req.user._id
+      console.log("Playlist data before saving:", {
+        name,
+        description,
+        owner: req.user.userId,
       });
+
+      const playlist = new PlaylistModel({
+        name,
+        description,
+        owner: req.user.userId, // Set the owner field using the authenticated user's ID
+      });
+
+      await playlist.save();
+      console.log("Playlist saved successfully:", playlist);
 
       res.status(201).json({
         success: true,
         data: playlist,
-        message: 'Playlist created successfully'
+        message: "Playlist created successfully",
       });
     } catch (error) {
-      console.error('Create playlist error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to create playlist'
-      });
+      console.error("Create playlist error:", error);
+
+      if (
+        error instanceof Error &&
+        error.message.includes("Playlist validation failed")
+      ) {
+        res.status(400).json({
+          success: false,
+          error: "Invalid playlist data",
+          details: error.message,
+        });
+      } else {
+        res
+          .status(500)
+          .json({ success: false, error: "Failed to create playlist" });
+      }
     }
   }
 
@@ -152,7 +159,7 @@ export class PlaylistController {
       if (!req.user) {
         res.status(401).json({
           success: false,
-          error: 'Authentication required'
+          error: "Authentication required",
         });
         return;
       }
@@ -162,33 +169,34 @@ export class PlaylistController {
       if (!playlistId) {
         res.status(400).json({
           success: false,
-          error: 'Playlist ID is required'
+          error: "Playlist ID is required",
         });
         return;
       }
 
       // Validate request body
       const validationResult = updatePlaylistSchema.safeParse(req.body);
-      
+
       if (!validationResult.success) {
         res.status(400).json({
           success: false,
-          error: 'Invalid input data',
-          details: validationResult.error.errors
+          error: "Invalid input data",
+          details: validationResult.error.errors,
         });
         return;
       }
 
       const updatedPlaylist = await playlistService.updatePlaylist(
         playlistId,
-        req.user._id,
+        req.user.userid,
         validationResult.data
       );
 
       if (!updatedPlaylist) {
         res.status(404).json({
           success: false,
-          error: 'Playlist not found or you do not have permission to update it'
+          error:
+            "Playlist not found or you do not have permission to update it",
         });
         return;
       }
@@ -196,13 +204,13 @@ export class PlaylistController {
       res.status(200).json({
         success: true,
         data: updatedPlaylist,
-        message: 'Playlist updated successfully'
+        message: "Playlist updated successfully",
       });
     } catch (error) {
-      console.error('Update playlist error:', error);
+      console.error("Update playlist error:", error);
       res.status(500).json({
         success: false,
-        error: 'Failed to update playlist'
+        error: "Failed to update playlist",
       });
     }
   }
@@ -216,7 +224,7 @@ export class PlaylistController {
       if (!req.user) {
         res.status(401).json({
           success: false,
-          error: 'Authentication required'
+          error: "Authentication required",
         });
         return;
       }
@@ -226,30 +234,34 @@ export class PlaylistController {
       if (!playlistId) {
         res.status(400).json({
           success: false,
-          error: 'Playlist ID is required'
+          error: "Playlist ID is required",
         });
         return;
       }
 
-      const deleted = await playlistService.deletePlaylist(playlistId, req.user._id);
+      const deleted = await playlistService.deletePlaylist(
+        playlistId,
+        req.user.userid
+      );
 
       if (!deleted) {
         res.status(404).json({
           success: false,
-          error: 'Playlist not found or you do not have permission to delete it'
+          error:
+            "Playlist not found or you do not have permission to delete it",
         });
         return;
       }
 
       res.status(200).json({
         success: true,
-        message: 'Playlist deleted successfully'
+        message: "Playlist deleted successfully",
       });
     } catch (error) {
-      console.error('Delete playlist error:', error);
+      console.error("Delete playlist error:", error);
       res.status(500).json({
         success: false,
-        error: 'Failed to delete playlist'
+        error: "Failed to delete playlist",
       });
     }
   }
@@ -263,7 +275,7 @@ export class PlaylistController {
       if (!req.user) {
         res.status(401).json({
           success: false,
-          error: 'Authentication required'
+          error: "Authentication required",
         });
         return;
       }
@@ -274,7 +286,7 @@ export class PlaylistController {
       if (!playlistId || !songId) {
         res.status(400).json({
           success: false,
-          error: 'Playlist ID and song ID are required'
+          error: "Playlist ID and song ID are required",
         });
         return;
       }
@@ -282,13 +294,14 @@ export class PlaylistController {
       const updatedPlaylist = await playlistService.addSongToPlaylist(
         playlistId,
         songId,
-        req.user._id
+        req.user.userid
       );
 
       if (!updatedPlaylist) {
         res.status(404).json({
           success: false,
-          error: 'Playlist not found or you do not have permission to modify it'
+          error:
+            "Playlist not found or you do not have permission to modify it",
         });
         return;
       }
@@ -296,20 +309,20 @@ export class PlaylistController {
       res.status(200).json({
         success: true,
         data: updatedPlaylist,
-        message: 'Song added to playlist successfully'
+        message: "Song added to playlist successfully",
       });
     } catch (error) {
-      console.error('Add song to playlist error:', error);
-      
-      if (error instanceof Error && error.message.includes('already exists')) {
+      console.error("Add song to playlist error:", error);
+
+      if (error instanceof Error && error.message.includes("already exists")) {
         res.status(409).json({
           success: false,
-          error: 'Song is already in the playlist'
+          error: "Song is already in the playlist",
         });
       } else {
         res.status(500).json({
           success: false,
-          error: 'Failed to add song to playlist'
+          error: "Failed to add song to playlist",
         });
       }
     }
@@ -324,7 +337,7 @@ export class PlaylistController {
       if (!req.user) {
         res.status(401).json({
           success: false,
-          error: 'Authentication required'
+          error: "Authentication required",
         });
         return;
       }
@@ -335,7 +348,7 @@ export class PlaylistController {
       if (!playlistId || !songId) {
         res.status(400).json({
           success: false,
-          error: 'Playlist ID and song ID are required'
+          error: "Playlist ID and song ID are required",
         });
         return;
       }
@@ -343,13 +356,14 @@ export class PlaylistController {
       const updatedPlaylist = await playlistService.removeSongFromPlaylist(
         playlistId,
         songId,
-        req.user._id
+        req.user.userid
       );
 
       if (!updatedPlaylist) {
         res.status(404).json({
           success: false,
-          error: 'Playlist not found or you do not have permission to modify it'
+          error:
+            "Playlist not found or you do not have permission to modify it",
         });
         return;
       }
@@ -357,13 +371,13 @@ export class PlaylistController {
       res.status(200).json({
         success: true,
         data: updatedPlaylist,
-        message: 'Song removed from playlist successfully'
+        message: "Song removed from playlist successfully",
       });
     } catch (error) {
-      console.error('Remove song from playlist error:', error);
+      console.error("Remove song from playlist error:", error);
       res.status(500).json({
         success: false,
-        error: 'Failed to remove song from playlist'
+        error: "Failed to remove song from playlist",
       });
     }
   }

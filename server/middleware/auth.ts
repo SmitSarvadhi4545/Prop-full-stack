@@ -64,31 +64,28 @@ interface AuthRequest extends Request {
 //     }
 //   }
 // };
-export const authenticateToken = async (
-  req: any,
-  res: any,
-  next: any
-): Promise<void> => {
+export const authenticateToken = (
+  req: Request & { user?: any },
+  res: Response,
+  next: NextFunction
+) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res
+      .status(401)
+      .json({ success: false, error: "Access token required" });
+  }
+
+  const token = authHeader.split(" ")[1];
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res
-        .status(401)
-        .json({ success: false, error: "Access token required" });
-    }
-
-    const token = authHeader.substring(7);
-    const jwtSecret = process.env.JWT_SECRET || "default-secret";
-
-    const decoded = jwt.verify(token, jwtSecret); // Verify token with the correct secret
-    if (typeof decoded === "object" && "userId" in decoded) {
-      req.user = { id: decoded.userId };
-    } else {
-      throw new Error("Invalid token payload");
-    }
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "default-secret"
+    );
+    req.user = decoded;
     next();
   } catch (error) {
-    console.error("Auth middleware error:", error);
+    console.error("Token validation error:", error);
     res.status(401).json({ success: false, error: "Invalid token" });
   }
 };

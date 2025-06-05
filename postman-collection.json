@@ -56,7 +56,7 @@
                   "if (pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('auth_token', response.data.token);",
-                  "    pm.collectionVariables.set('user_id', response.data.user._id);",
+                  "    pm.collectionVariables.set('user_id', response.data.user.userid);",
                   "}"
                 ]
               }
@@ -95,7 +95,7 @@
                   "if (pm.response.code === 200) {",
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('auth_token', response.data.token);",
-                  "    pm.collectionVariables.set('user_id', response.data.user._id);",
+                  "    pm.collectionVariables.set('user_id', response.data.user.userid);",
                   "}"
                 ]
               }

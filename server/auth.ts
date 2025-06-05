@@ -57,6 +57,7 @@ export function setupAuth(app: Express) {
 
     try {
       const decoded = authService.verifyToken(token);
+      
       console.log(`Decoded token: ${JSON.stringify(decoded)}`); // Log the decoded token
 
       if (!decoded) {

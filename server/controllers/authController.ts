@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import { authService } from "../services/authService";
 import { insertUserSchema, loginUserSchema } from "@shared/schema";
 import { z } from "zod";
+import { UserModel } from "../models/User";
+import jwt from "jsonwebtoken";
 
 /**
  * Authentication controller handling user registration, login, and profile management
@@ -61,7 +63,7 @@ export class AuthController {
         },
         message: "User registered successfully",
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Registration error:", error);
       res.status(500).json({
         success: false,
@@ -76,45 +78,41 @@ export class AuthController {
    */
   async login(req: Request, res: Response): Promise<void> {
     try {
-      // Validate request body
-      const validationResult = loginUserSchema.safeParse(req.body);
+      const { email, password } = req.body;
 
-      if (!validationResult.success) {
-        res.status(400).json({
-          success: false,
-          error: "Invalid input data",
-          details: validationResult.error.errors,
-        });
+      if (!email || !password) {
+        res
+          .status(400)
+          .json({ success: false, error: "Email and password are required" });
         return;
       }
 
-      const { email, password } = validationResult.data;
-
-      // Authenticate user
-      const result = await authService.authenticateUser(email, password);
-
-      if (!result) {
-        res.status(401).json({
-          success: false,
-          error: "Invalid email or password",
-        });
+      const user = await UserModel.findOne({ email });
+      if (!user) {
+        res
+          .status(401)
+          .json({ success: false, error: "Invalid email or password" });
         return;
       }
+
+      const token = jwt.sign(
+        { userId: user._id },
+        process.env.JWT_SECRET || "default-secret",
+        {
+          expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+        }
+      );
 
       res.status(200).json({
         success: true,
-        data: {
-          user: result.user,
-          token: result.token,
-        },
+        data: { user, token },
         message: "Login successful",
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Login error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Internal server error during login",
-      });
+      res
+        .status(500)
+        .json({ success: false, error: "Internal server error during login" });
     }
   }
 
@@ -128,23 +126,17 @@ export class AuthController {
   ): Promise<void> {
     try {
       if (!req.user) {
-        res.status(401).json({
-          success: false,
-          error: "Authentication required",
-        });
-        return;
+        res
+          .status(401)
+          .json({ success: false, error: "Authentication required" });
       }
 
-      res.status(200).json({
-        success: true,
-        data: req.user,
-      });
+      res.status(200).json({ success: true, data: req.user });
     } catch (error) {
       console.error("Profile fetch error:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to fetch user profile",
-      });
+      res
+        .status(500)
+        .json({ success: false, error: "Failed to fetch user profile" });
     }
   }
 
@@ -182,7 +174,7 @@ export class AuthController {
       }
 
       const updatedUser = await authService.updateUser(
-        req.user._id,
+        req.user.userid,
         validationResult.data
       );
 
