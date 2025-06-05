@@ -10,6 +10,8 @@ import AuthPage from "@/pages/auth-page";
 import PlaylistDetailPage from "@/pages/playlist-detail";
 import NotFound from "@/pages/not-found";
 
+
+
 function Router() {
   return (
     <Switch>

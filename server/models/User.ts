@@ -9,7 +9,7 @@ const userSchema = new Schema<IUser>({
   username: {
     type: String,
     required: true,
-    unique: true,
+    unique: true, // `unique: true` automatically creates an index
     trim: true,
     minlength: 3,
     maxlength: 50
@@ -17,7 +17,7 @@ const userSchema = new Schema<IUser>({
   email: {
     type: String,
     required: true,
-    unique: true,
+    unique: true, // `unique: true` automatically creates an index
     trim: true,
     lowercase: true
   },
@@ -43,8 +43,5 @@ const userSchema = new Schema<IUser>({
   }
 });
 
-// Create indexes for better performance
-userSchema.index({ email: 1 });
-userSchema.index({ username: 1 });
-
+// Remove explicit index definitions for fields with `unique: true`
 export const UserModel = mongoose.model<IUser>('User', userSchema);

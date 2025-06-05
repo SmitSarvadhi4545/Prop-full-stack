@@ -55,15 +55,21 @@
   --ring: 142 76% 36%; /* #1DB954 */
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
 
+@layer base {
+  /* * {
+    /* @apply border-border; */
+    /* @apply border-[hsl(var(--border))];
+  } */ 
+
+  /* * {
+    border-color: hsl(var(--border));
+  } */
+/* 
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
-  }
+  } */
 
   /* Scrollbar styles */
   ::-webkit-scrollbar {
@@ -118,16 +124,18 @@
 
   .playlist-card:hover {
     transform: translateY(-2px);
-    background-color: hsl(var(--muted));
+    /* background-color: theme('colors.background'); */
+     /* Use the custom color defined in Tailwind config */
   }
 
   .song-item {
     transition: background-color 0.2s ease;
   }
 
-  .song-item:hover {
-    background-color: hsl(var(--muted) / 0.5);
-  }
+  /* .song-item:hover {
+    background-color: theme('colors.background');
+     /* Use the custom color defined in Tailwind config */
+  /* } */ */
 
   /* Glass effect for modals */
   .glass-effect {
@@ -156,49 +164,29 @@
   }
 
   /* Focus styles for accessibility */
-  .focus-ring {
+  /* .focus-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background;
-  }
+  } */
 
   /* Custom button variants */
-  .btn-spotify {
+  /* .btn-spotify {
     @apply bg-primary hover:bg-primary/90 text-primary-foreground font-medium;
     transition: all 0.2s ease;
-  }
+  } */
 
   .btn-spotify:hover {
     transform: scale(1.05);
   }
 
-  .btn-ghost-spotify {
+  /* .btn-ghost-spotify {
     @apply text-muted-foreground hover:text-foreground hover:bg-muted;
     transition: all 0.2s ease;
-  }
+  } */
 
   /* Navigation active states */
-  .nav-link {
+  /* .nav-link {
     @apply flex items-center px-4 py-3 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all duration-200;
-  }
-
-  .nav-link.active {
-    @apply text-foreground bg-muted;
-  }
-
-  /* Card hover effects */
-  .card-hover {
-    @apply transition-all duration-200 hover:shadow-lg hover:scale-[1.02];
-  }
-
-  /* Search results styling */
-  .search-result-item {
-    @apply flex items-center p-3 bg-card hover:bg-muted rounded-lg cursor-pointer transition-colors;
-  }
-
-  /* Playlist grid responsive */
-  .playlist-grid {
-    @apply grid gap-6;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  }
+  } */
 
   @media (max-width: 768px) {
     .playlist-grid {
@@ -207,7 +195,7 @@
   }
 
   /* Mobile responsiveness */
-  @media (max-width: 640px) {
+  /* @media (max-width: 640px) {
     .sidebar-desktop {
       @apply hidden;
     }
@@ -215,11 +203,16 @@
     .main-content {
       @apply ml-0;
     }
-  }
+  } */
 }
 
 @layer utilities {
   /* Text truncation utilities */
+  .border-border {
+    border-color: hsl(var(--border));
+  }
+
+  /* Existing utilities */
   .truncate-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -232,15 +225,6 @@
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
-  }
-
-  /* Spacing utilities */
-  .section-spacing {
-    @apply py-8 md:py-12 lg:py-16;
-  }
-
-  .container-padding {
-    @apply px-4 sm:px-6 lg:px-8;
   }
 
   /* Background gradients */

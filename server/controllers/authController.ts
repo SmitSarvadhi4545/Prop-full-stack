@@ -1,7 +1,7 @@
-import { Request, Response } from 'express';
-import { authService } from '../services/authService';
-import { insertUserSchema, loginUserSchema } from '@shared/schema';
-import { z } from 'zod';
+import { Request, Response } from "express";
+import { authService } from "../services/authService";
+import { insertUserSchema, loginUserSchema } from "@shared/schema";
+import { z } from "zod";
 
 /**
  * Authentication controller handling user registration, login, and profile management
@@ -14,13 +14,14 @@ export class AuthController {
   async register(req: Request, res: Response): Promise<void> {
     try {
       // Validate request body
+      console.log("Registering user with data:", req.body);
       const validationResult = insertUserSchema.safeParse(req.body);
-      
+
       if (!validationResult.success) {
         res.status(400).json({
           success: false,
-          error: 'Invalid input data',
-          details: validationResult.error.errors
+          error: "Invalid input data",
+          details: validationResult.error.errors,
         });
         return;
       }
@@ -32,17 +33,19 @@ export class AuthController {
       if (existingUser) {
         res.status(409).json({
           success: false,
-          error: 'User with this email already exists'
+          error: "User with this email already exists",
         });
         return;
       }
 
       // Check if username is taken
-      const existingUsername = await authService.findUserByUsername(userData.username);
+      const existingUsername = await authService.findUserByUsername(
+        userData.username
+      );
       if (existingUsername) {
         res.status(409).json({
           success: false,
-          error: 'Username is already taken'
+          error: "Username is already taken",
         });
         return;
       }
@@ -54,15 +57,15 @@ export class AuthController {
         success: true,
         data: {
           user: result.user,
-          token: result.token
+          token: result.token,
         },
-        message: 'User registered successfully'
+        message: "User registered successfully",
       });
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error("Registration error:", error);
       res.status(500).json({
         success: false,
-        error: 'Internal server error during registration'
+        error: "Internal server error during registration",
       });
     }
   }
@@ -75,12 +78,12 @@ export class AuthController {
     try {
       // Validate request body
       const validationResult = loginUserSchema.safeParse(req.body);
-      
+
       if (!validationResult.success) {
         res.status(400).json({
           success: false,
-          error: 'Invalid input data',
-          details: validationResult.error.errors
+          error: "Invalid input data",
+          details: validationResult.error.errors,
         });
         return;
       }
@@ -93,7 +96,7 @@ export class AuthController {
       if (!result) {
         res.status(401).json({
           success: false,
-          error: 'Invalid email or password'
+          error: "Invalid email or password",
         });
         return;
       }
@@ -102,15 +105,15 @@ export class AuthController {
         success: true,
         data: {
           user: result.user,
-          token: result.token
+          token: result.token,
         },
-        message: 'Login successful'
+        message: "Login successful",
       });
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       res.status(500).json({
         success: false,
-        error: 'Internal server error during login'
+        error: "Internal server error during login",
       });
     }
   }
@@ -119,25 +122,28 @@ export class AuthController {
    * Get current user profile (requires authentication)
    * GET /api/auth/me
    */
-  async getProfile(req: Request & { user?: any }, res: Response): Promise<void> {
+  async getProfile(
+    req: Request & { user?: any },
+    res: Response
+  ): Promise<void> {
     try {
       if (!req.user) {
         res.status(401).json({
           success: false,
-          error: 'Authentication required'
+          error: "Authentication required",
         });
         return;
       }
 
       res.status(200).json({
         success: true,
-        data: req.user
+        data: req.user,
       });
     } catch (error) {
-      console.error('Profile fetch error:', error);
+      console.error("Profile fetch error:", error);
       res.status(500).json({
         success: false,
-        error: 'Failed to fetch user profile'
+        error: "Failed to fetch user profile",
       });
     }
   }
@@ -146,51 +152,57 @@ export class AuthController {
    * Update user profile (requires authentication)
    * PUT /api/auth/profile
    */
-  async updateProfile(req: Request & { user?: any }, res: Response): Promise<void> {
+  async updateProfile(
+    req: Request & { user?: any },
+    res: Response
+  ): Promise<void> {
     try {
       if (!req.user) {
         res.status(401).json({
           success: false,
-          error: 'Authentication required'
+          error: "Authentication required",
         });
         return;
       }
 
       const updateSchema = z.object({
         name: z.string().min(1).max(100).optional(),
-        username: z.string().min(3).max(50).optional()
+        username: z.string().min(3).max(50).optional(),
       });
 
       const validationResult = updateSchema.safeParse(req.body);
-      
+
       if (!validationResult.success) {
         res.status(400).json({
           success: false,
-          error: 'Invalid input data',
-          details: validationResult.error.errors
+          error: "Invalid input data",
+          details: validationResult.error.errors,
         });
         return;
       }
 
-      const updatedUser = await authService.updateUser(req.user._id, validationResult.data);
+      const updatedUser = await authService.updateUser(
+        req.user._id,
+        validationResult.data
+      );
 
       res.status(200).json({
         success: true,
         data: updatedUser,
-        message: 'Profile updated successfully'
+        message: "Profile updated successfully",
       });
     } catch (error) {
-      console.error('Profile update error:', error);
-      
-      if (error instanceof Error && error.message.includes('duplicate')) {
+      console.error("Profile update error:", error);
+
+      if (error instanceof Error && error.message.includes("duplicate")) {
         res.status(409).json({
           success: false,
-          error: 'Username is already taken'
+          error: "Username is already taken",
         });
       } else {
         res.status(500).json({
           success: false,
-          error: 'Failed to update profile'
+          error: "Failed to update profile",
         });
       }
     }
@@ -206,13 +218,13 @@ export class AuthController {
       // This endpoint exists for consistency and could be extended to maintain a blacklist
       res.status(200).json({
         success: true,
-        message: 'Logout successful'
+        message: "Logout successful",
       });
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
       res.status(500).json({
         success: false,
-        error: 'Logout failed'
+        error: "Logout failed",
       });
     }
   }

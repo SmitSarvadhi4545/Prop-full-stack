@@ -1,15 +1,13 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { Song } from '@shared/schema';
 
-export interface ISong extends Omit<Song, '_id'>, Document {
-  _id: string;
-}
+export interface ISong extends Omit<Song, '_id'>, Document {}
 
 const songSchema = new Schema<ISong>({
   spotifyId: {
     type: String,
     required: true,
-    unique: true,
+    unique: true, // `unique: true` automatically creates an index
     trim: true
   },
   name: {
@@ -50,9 +48,5 @@ const songSchema = new Schema<ISong>({
   }
 });
 
-// Create indexes for better performance
-songSchema.index({ spotifyId: 1 });
-songSchema.index({ name: 1 });
-songSchema.index({ artist: 1 });
-
+// Remove explicit index definitions for fields with `unique: true`
 export const SongModel = mongoose.model<ISong>('Song', songSchema);

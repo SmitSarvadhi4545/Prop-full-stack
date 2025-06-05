@@ -2,12 +2,14 @@
  * Spotify Web API configuration and client setup
  * Handles authentication and token management for Spotify API calls
  */
+import dotenv from 'dotenv';
 
 interface SpotifyTokenResponse {
   access_token: string;
   token_type: string;
   expires_in: number;
 }
+dotenv.config();
 
 class SpotifyConfig {
   private clientId: string;

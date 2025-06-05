@@ -37,7 +37,6 @@ A full-stack Music Playlist Management System built with React TypeScript, Expre
 ### Development Tools
 - **Vite** for fast development and building
 - **ESLint** and **Prettier** for code quality
-- **Swagger/OpenAPI** for comprehensive API documentation
 - **Postman** collection for API testing
 
 ## 📋 Prerequisites
