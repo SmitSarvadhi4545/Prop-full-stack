@@ -73,6 +73,42 @@ export class AuthController {
   }
 
   /**
+   * Get current user profile (requires authentication)
+   * GET /api/user
+   */
+  async getUser(req: Request & { user?: any }, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({
+          success: false,
+          error: "Authentication required",
+        });
+        return;
+      }
+
+      const user = await UserModel.findById(req.user.userId).select("-password");
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          error: "User not found",
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: user,
+      });
+    } catch (error) {
+      console.error("Get user error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to fetch user profile",
+      });
+    }
+  }
+
+  /**
    * Authenticate user and return JWT token
    * POST /api/auth/login
    */

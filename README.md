@@ -2,8 +2,6 @@
 
 A full-stack Music Playlist Management System built with React TypeScript, Express.js, MongoDB, and Spotify API integration. Create, manage, and organize your music playlists with songs from Spotify's extensive catalog.
 
-![Music Playlist Management System](https://via.placeholder.com/800x400/1DB954/FFFFFF?text=PlaylistHub+-+Music+Playlist+Management)
-
 ## 🎵 Features
 
 - **🔐 User Authentication**: Secure registration and login with JWT tokens
@@ -53,5 +51,21 @@ Before setting up the project, ensure you have:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/music-playlist-management.git
-cd music-playlist-management
+git clone https://github.com/SmitSarvadhi4545/Prop-full-stack.git
+```
+
+### 2. Run backend
+
+```bash
+cd server
+npm install
+npm run dev
+```
+
+### 3. Run frontend
+
+```bash
+cd client
+npm install
+npm run dev
+```
